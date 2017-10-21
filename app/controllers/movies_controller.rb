@@ -15,13 +15,10 @@ class MoviesController < ApplicationController
     @checked_ratings = @all_ratings if !params[:ratings]
     @checked_ratings = params[:ratings].keys if params[:ratings]
     sort_by = params[:sort_by]
- #   session[:ratings] = params[:ratings] if params[:ratings]
     params[:ratings] = session[:ratings] if !params[:ratings]
     @title_hilite = "hilite" if sort_by == "title"
     @release_date_hilite = "hilite" if sort_by == "release_date"
     @movies = Movie.all
-   # @movies = Movie.order(sort_by) if sort_by
-    #@movies = Movie.where(rating: @checked_ratings)
     @movies = Movie.order(sort_by).where(rating: @checked_ratings)
   end
 
