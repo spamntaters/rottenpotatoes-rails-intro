@@ -1,5 +1,5 @@
 class MoviesController < ApplicationController
-
+  
   def movie_params
     params.require(:movie).permit(:title, :rating, :description, :release_date)
   end
@@ -11,15 +11,25 @@ class MoviesController < ApplicationController
   end
 
   def index
+    #fetch possible ratings from db and set safe checked default
     @all_ratings = Movie.allMovieRatings
-    @checked_ratings = @all_ratings if !params[:ratings]
+    @checked_ratings ||= @all_ratings
+    #set params if not already set or if empty
+    params[:ratings] ||= session[:ratings]
+    params[:sort_by] ||= session[:sort_by]
     @checked_ratings = params[:ratings].keys if params[:ratings]
     sort_by = params[:sort_by]
-    params[:ratings] = session[:ratings] if !params[:ratings]
     @title_hilite = "hilite" if sort_by == "title"
     @release_date_hilite = "hilite" if sort_by == "release_date"
     @movies = Movie.all
     @movies = Movie.order(sort_by).where(rating: @checked_ratings)
+    #save session
+    session[:sort_by] = params[:sort_by]
+    session[:ratings] = params[:ratings]
+    #redirect to maintain RESTfulness
+    flash.keep
+    redirect_to movies_path({sort_by: params[:sort_by], ratings: params[:ratings]}) if params[:ratings] && params[:sort_by]
+
   end
 
   def new
