@@ -12,7 +12,7 @@ class MoviesController < ApplicationController
 
   def index
     #DEBUGGING USE ONLY!!
-    session.clear if params[:session] == '1'
+    session.clear if params[:session] == "clear"
     #fetch possible ratings from db and set safe checked default
     @all_ratings = Movie.allMovieRatings
     ratings_hash = Hash[*@all_ratings.map {|key| [key, 1]}.flatten]
