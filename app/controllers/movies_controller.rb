@@ -11,25 +11,38 @@ class MoviesController < ApplicationController
   end
 
   def index
+    #DEBUGGING USE ONLY!!
+    session.clear if params[:session] == '1'
     #fetch possible ratings from db and set safe checked default
     @all_ratings = Movie.allMovieRatings
-    @checked_ratings ||= @all_ratings
+    ratings_hash = Hash[*@all_ratings.map {|key| [key, 1]}.flatten]
     #set params if not already set or if empty
-    params[:ratings] ||= session[:ratings]
-    params[:sort_by] ||= session[:sort_by]
-    @checked_ratings = params[:ratings].keys if params[:ratings]
-    sort_by = params[:sort_by]
-    @title_hilite = "hilite" if sort_by == "title"
-    @release_date_hilite = "hilite" if sort_by == "release_date"
     @movies = Movie.all
-    @movies = Movie.order(sort_by).where(rating: @checked_ratings)
-    #save session
-    session[:sort_by] = params[:sort_by]
-    session[:ratings] = params[:ratings]
+    if params[:ratings]
+      ratings_hash = params[:ratings]
+      @checked_ratings = ratings_hash.keys
+      @movies = @movies.where(rating: @checked_ratings)
+      session[:ratings] = ratings_hash
+    end
+    if params[:sort_by]
+      case params[:sort_by]
+        when "title"
+          @movies = @movies.order(:title)
+          @title_hilite = "hilite"
+          session[:sort_by] = "title"
+        when "release_date"
+          @movies = @movies.order(:release_date)
+          @release_date_hilite = "hilite"
+          session[:sort_by] = "release_date"
+      end
+    end
     #redirect to maintain RESTfulness
-    flash.keep
-    redirect_to movies_path({sort_by: params[:sort_by], ratings: params[:ratings]}) if params[:ratings] && params[:sort_by]
-
+    if !params[:sort_by] || !params[:ratings]
+      redirect_hash = (session[:ratings]) ? Hash[*session[:ratings].keys.map {|key| ["ratings[#{key}]", 1]}.flatten] : {ratings: ratings_hash}
+      redirect_hash[:sort_by] = (session[:sort_by]) ? session[:sort_by] : "none"
+      flash.keep
+      redirect_to movies_path(redirect_hash) and return
+    end
   end
 
   def new
